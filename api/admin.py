@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.utils.html import format_html
+from django.contrib.admin.helpers import ActionForm
 
 from .models import (
     Make,
@@ -56,7 +57,7 @@ class ListingImageInline(admin.TabularInline):
     preview.short_description = "Preview"
 
 
-class ListingActionForm(forms.Form):
+class ListingActionForm(ActionForm):
     reason = forms.CharField(required=False, label="Rejection reason")
 
 

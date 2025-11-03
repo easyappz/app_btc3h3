@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 
 
 class Make(models.Model):
@@ -127,6 +128,20 @@ class Listing(models.Model):
 
     def __str__(self) -> str:
         return f"#{self.id} {self.title}"
+
+    def clean(self):
+        super().clean()
+        # Ensure selected car_model belongs to the selected make
+        if self.car_model_id and self.make_id:
+            if self.car_model.make_id != self.make_id:
+                raise ValidationError({
+                    "car_model": "Selected car_model does not belong to selected make.",
+                })
+
+    def save(self, *args, **kwargs):
+        # Enforce model-level validation on every save
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class ListingImage(models.Model):
