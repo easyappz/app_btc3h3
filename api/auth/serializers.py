@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from api.models import UserProfile
+
 
 User = get_user_model()
 
@@ -47,10 +49,24 @@ class RefreshInputSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    phone = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "username", "email", "date_joined", "last_login"]
-        read_only_fields = fields
+        fields = ["id", "username", "email", "date_joined", "last_login", "phone"]
+        read_only_fields = ["id", "date_joined", "last_login", "phone"]
+
+    def get_phone(self, obj):
+        try:
+            return obj.profile.phone or None
+        except UserProfile.DoesNotExist:
+            return None
+
+
+class ProfileUpdateSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150, required=False)
+    email = serializers.EmailField(required=False)
+    phone = serializers.CharField(max_length=32, required=False, allow_blank=True)
 
 
 class TokensSerializer(serializers.Serializer):

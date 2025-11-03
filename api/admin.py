@@ -15,6 +15,7 @@ from .models import (
     Conversation,
     Message,
     ModerationStatus,
+    UserProfile,
 )
 
 
@@ -147,3 +148,10 @@ class MessageAdmin(admin.ModelAdmin):
     search_fields = ("author__username", "conversation__id")
     list_select_related = ("conversation", "author")
     readonly_fields = ("created_at",)
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "phone")
+    search_fields = ("user__username", "phone")
+    list_select_related = ("user",)

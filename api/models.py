@@ -252,3 +252,15 @@ class Message(models.Model):
 
     def __str__(self) -> str:
         return f"Msg {self.id} in conv {self.conversation_id}"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
+    phone = models.CharField(max_length=32, blank=True, default="")
+
+    class Meta:
+        verbose_name = "User profile"
+        verbose_name_plural = "User profiles"
+
+    def __str__(self) -> str:
+        return f"Profile u{self.user_id}"

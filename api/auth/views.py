@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import AuthenticationFailed
 from drf_spectacular.utils import extend_schema
 
+from api.models import UserProfile
 from .jwt_utils import encode, decode
 from .permissions import IsAuthenticatedJWT
 from .serializers import (
@@ -17,6 +18,7 @@ from .serializers import (
     LoginInputSerializer,
     RefreshInputSerializer,
     ProfileSerializer,
+    ProfileUpdateSerializer,
     TokensSerializer,
     AccessTokenSerializer,
     AuthSuccessSerializer,
@@ -57,6 +59,7 @@ class RegisterView(APIView):
         user.set_password(password)
         user.last_login = timezone.now()
         user.save()
+        UserProfile.objects.get_or_create(user=user)
 
         tokens = _issue_tokens_for_user(user)
         return Response(
@@ -144,3 +147,25 @@ class ProfileMeView(APIView):
     )
     def get(self, request):
         return Response(ProfileSerializer(request.user).data)
+
+    @extend_schema(
+        summary="Update current user profile (username, email, phone)",
+        request=ProfileUpdateSerializer,
+        responses={200: ProfileSerializer, 400: None, 401: None},
+        tags=["Profile"],
+    )
+    def patch(self, request):
+        serializer = ProfileUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        if "username" in serializer.validated_data:
+            user.username = serializer.validated_data["username"]
+        if "email" in serializer.validated_data:
+            user.email = serializer.validated_data["email"]
+        user.save()
+        # Phone in profile
+        prof, _ = UserProfile.objects.get_or_create(user=user)
+        if "phone" in serializer.validated_data:
+            prof.phone = serializer.validated_data["phone"]
+            prof.save()
+        return Response(ProfileSerializer(user).data)

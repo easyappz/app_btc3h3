@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: Easyappz Auto Bulletin Board API
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Primary API schema for frontend integration. Tokens are passed only via
     Authorization: Bearer <token> header. No cookies are used.
 servers:
-  - url: /  # relative server
+  - url: /
 components:
   securitySchemes:
     bearerAuth:
@@ -14,6 +14,12 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+      required: [detail]
     Message:
       type: object
       properties:
@@ -40,7 +46,21 @@ components:
           type: string
           format: date-time
           nullable: true
+        phone:
+          type: string
+          nullable: true
       required: [id, username, email, date_joined]
+    ProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+      additionalProperties: false
     Tokens:
       type: object
       properties:
@@ -86,26 +106,214 @@ components:
               type: string
           required: [email, password]
       description: Provide either username+password or email+password
-    RefreshRequest:
+    ListingList:
       type: object
       properties:
-        refresh_token:
-          type: string
-      required: [refresh_token]
-    AuthSuccess:
+        id: { type: integer }
+        title: { type: string }
+        price: { type: number, format: float }
+        year: { type: integer }
+        mileage: { type: integer }
+        make: { type: string }
+        car_model: { type: string }
+        location: { type: string }
+        status: { type: string, enum: [PENDING, APPROVED, REJECTED] }
+        created_at: { type: string, format: date-time }
+        main_image: { type: string, nullable: true }
+      required: [id, title, price, year, mileage, make, car_model, location, status, created_at]
+    ListingImage:
       type: object
       properties:
-        user:
-          $ref: '#/components/schemas/Profile'
-        tokens:
-          $ref: '#/components/schemas/Tokens'
-      required: [user, tokens]
-    Error:
+        id: { type: integer }
+        image: { type: string }
+        order: { type: integer }
+        created_at: { type: string, format: date-time }
+      required: [id, image, order, created_at]
+    ListingDetail:
       type: object
       properties:
-        detail:
-          type: string
-      required: [detail]
+        id: { type: integer }
+        seller:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        make:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+          required: [id, name]
+        car_model:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            make:
+              type: object
+              properties:
+                id: { type: integer }
+                name: { type: string }
+              required: [id, name]
+          required: [id, name]
+        year: { type: integer }
+        price: { type: number, format: float }
+        mileage: { type: integer }
+        transmission: { type: string, enum: [MANUAL, AUTO, CVT, ROBOT] }
+        fuel: { type: string, enum: [GASOLINE, DIESEL, HYBRID, ELECTRIC] }
+        body: { type: string, enum: [SEDAN, HATCHBACK, SUV, COUPE, WAGON, PICKUP, VAN] }
+        drive: { type: string, enum: [FWD, RWD, AWD] }
+        condition: { type: string, enum: [NEW, USED] }
+        color: { type: string }
+        location:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            region: { type: string }
+          required: [id, name]
+        owners_count: { type: integer }
+        vin: { type: string, nullable: true }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string }
+        rejection_reason: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingImage'
+      required: [id, seller, make, car_model, year, price, mileage, transmission, fuel, body, drive, condition, color, location, owners_count, title, description, status, created_at, updated_at]
+    ListingCreate:
+      type: object
+      properties:
+        make: { type: integer }
+        car_model: { type: integer }
+        year: { type: integer }
+        price: { type: number, format: float }
+        mileage: { type: integer }
+        transmission: { type: string }
+        fuel: { type: string }
+        body: { type: string }
+        drive: { type: string }
+        condition: { type: string }
+        color: { type: string }
+        location: { type: integer }
+        owners_count: { type: integer }
+        vin: { type: string }
+        title: { type: string }
+        description: { type: string }
+      required: [make, car_model, year, price, mileage, transmission, fuel, body, drive, condition, color, location, owners_count, title]
+    Favorite:
+      type: object
+      properties:
+        id: { type: integer }
+        listing:
+          $ref: '#/components/schemas/ListingList'
+        created_at: { type: string, format: date-time }
+    Review:
+      type: object
+      properties:
+        id: { type: integer }
+        author:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        seller:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        rating: { type: integer }
+        text: { type: string }
+        listing: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+    ReviewCreate:
+      type: object
+      properties:
+        seller_id: { type: integer }
+        listing_id: { type: integer, nullable: true }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        text: { type: string }
+      required: [seller_id, rating]
+    Conversation:
+      type: object
+      properties:
+        id: { type: integer }
+        seller:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        buyer:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        listing:
+          $ref: '#/components/schemas/ListingList'
+        is_active: { type: boolean }
+        last_message_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        last_message:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            author:
+              type: object
+              properties:
+                id: { type: integer }
+                username: { type: string }
+              required: [id, username]
+            text: { type: string }
+            created_at: { type: string, format: date-time }
+    ConversationDetail:
+      type: object
+      properties:
+        id: { type: integer }
+        seller:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        buyer:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        listing:
+          $ref: '#/components/schemas/ListingList'
+        is_active: { type: boolean }
+        last_message_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: integer }
+        author:
+          type: object
+          properties:
+            id: { type: integer }
+            username: { type: string }
+          required: [id, username]
+        text: { type: string }
+        created_at: { type: string, format: date-time }
+        read_at: { type: string, format: date-time, nullable: true }
+    ChatMessageCreate:
+      type: object
+      properties:
+        text: { type: string }
+      required: [text]
 paths:
   /api/hello/:
     get:
@@ -118,6 +326,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Message'
+  /api/schema/yaml/:
+    get:
+      tags: [Schema]
+      summary: Download api_schema.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            text/yaml:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
   /api/auth/register/:
     post:
       tags: [Auth]
@@ -134,7 +358,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSuccess'
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/Profile' }
+                  tokens:
+                    type: object
+                    properties:
+                      access: { type: string }
+                      refresh: { type: string }
+                    required: [access, refresh]
         '400':
           description: Validation error
           content:
@@ -150,14 +382,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              oneOf:
+                - $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSuccess'
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/Profile' }
+                  tokens: { $ref: '#/components/schemas/Tokens' }
         '400':
           description: Validation error
           content:
@@ -179,7 +415,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshRequest'
+              $ref: '#/components/schemas/AccessOnly'
       responses:
         '200':
           description: OK
@@ -212,3 +448,454 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    patch:
+      tags: [Profile]
+      summary: Update current user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProfileUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/catalog/listings/:
+    get:
+      tags: [Catalog]
+      summary: List car listings with filters and sorting
+      parameters:
+        - in: query
+          name: make
+          schema: { type: string }
+        - in: query
+          name: model
+          schema: { type: string }
+        - in: query
+          name: year_min
+          schema: { type: integer }
+        - in: query
+          name: year_max
+          schema: { type: integer }
+        - in: query
+          name: price_min
+          schema: { type: number }
+        - in: query
+          name: price_max
+          schema: { type: number }
+        - in: query
+          name: mileage_max
+          schema: { type: integer }
+        - in: query
+          name: transmission
+          schema: { type: string }
+        - in: query
+          name: fuel
+          schema: { type: string }
+        - in: query
+          name: body
+          schema: { type: string }
+        - in: query
+          name: drive
+          schema: { type: string }
+        - in: query
+          name: color
+          schema: { type: string }
+        - in: query
+          name: location
+          schema: { type: string }
+        - in: query
+          name: condition
+          schema: { type: string }
+        - in: query
+          name: owners_count_max
+          schema: { type: integer }
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [created_desc, price_asc, price_desc, year_desc]
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: page_size
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/ListingList' }
+    post:
+      tags: [Catalog]
+      summary: Create listing (goes to moderation PENDING)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ListingCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListingDetail' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/catalog/listings/{id}/:
+    get:
+      tags: [Catalog]
+      summary: Get listing by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ListingDetail' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [Catalog]
+      summary: Update own listing
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ListingCreate' }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/ListingDetail' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      tags: [Catalog]
+      summary: Delete own listing
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Deleted }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/catalog/listings/{id}/images/:
+    post:
+      tags: [Catalog]
+      summary: Upload listing image
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                order:
+                  type: integer
+              required: [image]
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ListingImage' } } } }
+        '400': { description: Bad request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/catalog/images/{image_id}/:
+    delete:
+      tags: [Catalog]
+      summary: Delete listing image by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: image_id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Deleted }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/catalog/listings/{id}/favorite/:
+    post:
+      tags: [Favorites]
+      summary: Add listing to favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      tags: [Favorites]
+      summary: Remove listing from favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Deleted }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/catalog/favorites/:
+    get:
+      tags: [Favorites]
+      summary: Get my favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: page_size
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/Favorite' }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/reviews/seller/{user_id}/:
+    get:
+      tags: [Reviews]
+      summary: List reviews for seller
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: page_size
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/Review' }
+  /api/reviews/:
+    post:
+      tags: [Reviews]
+      summary: Create a review
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewCreate' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Review' } } } }
+        '400': { description: Bad request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/reviews/{id}/:
+    delete:
+      tags: [Reviews]
+      summary: Delete a review (author or staff)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Deleted }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/chat/conversations/:
+    get:
+      tags: [Chat]
+      summary: List my conversations
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: page_size
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/Conversation' }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [Chat]
+      summary: Create/find conversation and send first message
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                seller_id: { type: integer }
+                listing_id: { type: integer }
+                text: { type: string }
+              required: [seller_id, listing_id, text]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversation: { $ref: '#/components/schemas/ConversationDetail' }
+                  message: { $ref: '#/components/schemas/ChatMessage' }
+        '400': { description: Bad request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/chat/conversations/{id}/:
+    get:
+      tags: [Chat]
+      summary: Get conversation details (participants only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConversationDetail' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/chat/conversations/{id}/messages/:
+    get:
+      tags: [Chat]
+      summary: Get messages for a conversation (participants only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: page_size
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/ChatMessage' }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [Chat]
+      summary: Send a message (participants only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatMessageCreate' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ChatMessage' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
