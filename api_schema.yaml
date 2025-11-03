@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: Easyappz Auto Bulletin Board API
+  version: 1.0.0
+  description: |
+    Primary API schema for frontend integration. Tokens are passed only via
+    Authorization: Bearer <token> header. No cookies are used.
+servers:
+  - url: /  # relative server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: [message, timestamp]
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        date_joined:
+          type: string
+          format: date-time
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, username, email, date_joined]
+    Tokens:
+      type: object
+      properties:
+        access:
+          type: string
+          description: JWT access token (expires in 3600s)
+        refresh:
+          type: string
+          description: JWT refresh token (expires in 7 days)
+      required: [access, refresh]
+    AccessOnly:
+      type: object
+      properties:
+        access:
+          type: string
+      required: [access]
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [username, email, password]
+    LoginRequest:
+      oneOf:
+        - type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+          required: [username, password]
+        - type: object
+          properties:
+            email:
+              type: string
+              format: email
+            password:
+              type: string
+          required: [email, password]
+      description: Provide either username+password or email+password
+    RefreshRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required: [refresh_token]
+    AuthSuccess:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/Profile'
+        tokens:
+          $ref: '#/components/schemas/Tokens'
+      required: [user, tokens]
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+      required: [detail]
+paths:
+  /api/hello/:
+    get:
+      tags: [Misc]
+      summary: Hello endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /api/auth/register/:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccess'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/login/:
+    post:
+      tags: [Auth]
+      summary: Login with username or email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccess'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/refresh/:
+    post:
+      tags: [Auth]
+      summary: Refresh access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessOnly'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/profile/me/:
+    get:
+      tags: [Profile]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
