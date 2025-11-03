@@ -1,5 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Basic minimal resets and base typography */
+:root {
+  --bg: #fafafa;
+  --text: #0b0b0c;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -8,6 +24,11 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Minimal focus outline for accessibility */
+:focus {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
 }
