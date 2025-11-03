@@ -9,8 +9,10 @@ import ListingDetails from './pages/ListingDetails';
 import Profile from './pages/Profile';
 import AddListing from './pages/AddListing';
 import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Auth from './pages/Auth';
 
-const EXPOSED_ROUTES = ['/', '/catalog', '/listing/:id', '/profile', '/add', '*'];
+const EXPOSED_ROUTES = ['/', '/catalog', '/listing/:id', '/profile', '/add', '/login', '*'];
 
 if (typeof window !== 'undefined' && typeof window.handleRoutes === 'function') {
   window.handleRoutes(EXPOSED_ROUTES);
@@ -36,8 +38,17 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: 'catalog', element: <Catalog /> },
       { path: 'listing/:id', element: <ListingDetails /> },
-      { path: 'profile', element: <Profile /> },
-      { path: 'add', element: <AddListing /> },
+      { path: 'profile', element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ) },
+      { path: 'add', element: (
+          <ProtectedRoute>
+            <AddListing />
+          </ProtectedRoute>
+        ) },
+      { path: 'login', element: <Auth /> },
     ],
   },
   { path: '*', element: <NotFound /> },
