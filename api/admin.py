@@ -124,7 +124,7 @@ class SellerStatsAdmin(admin.ModelAdmin):
     list_display = ("id", "seller", "rating_avg", "rating_count", "updated_at")
     search_fields = ("seller__username",)
     list_select_related = ("seller",)
-    readonly_fields = ("updated_at",)
+    readonly_fields = ("rating_avg", "rating_count", "updated_at")
 
 
 @admin.register(Conversation)

@@ -5,6 +5,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 
 
+ALLOWED_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".heic")
+
+
 class Make(models.Model):
     name = models.CharField(max_length=64, unique=True, db_index=True)
 
@@ -157,6 +160,22 @@ class ListingImage(models.Model):
 
     def __str__(self) -> str:
         return f"Image {self.order} for Listing {self.listing_id}"
+
+    def clean(self):
+        super().clean()
+        # Simple extension validation without regex, no Pillow usage
+        if self.image and getattr(self.image, "name", ""):
+            name = self.image.name.lower()
+            if not name.endswith(ALLOWED_IMAGE_EXTENSIONS):
+                allowed_str = ", ".join(ALLOWED_IMAGE_EXTENSIONS)
+                raise ValidationError({
+                    "image": f"Unsupported file extension. Allowed: {allowed_str}",
+                })
+
+    def save(self, *args, **kwargs):
+        # Ensure validation always runs (including extension check)
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class Favorite(models.Model):
