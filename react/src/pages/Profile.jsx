@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import Container from '../components/Layout/Container';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMe, updateMe } from '../api/auth';
-import { getListing, updateListing, deleteListing } from '../api/listings';
+import { getListing, updateListing, deleteListing, listFavorites } from '../api/listings';
 import { listConversations, listMessages, sendMessage } from '../api/chat';
+import { Link } from 'react-router-dom';
 
 function SectionTitle({ children }) {
   return <h2 data-easytag="id100-react/src/pages/Profile.jsx" className="text-sm font-semibold text-brand mb-2">{children}</h2>;
@@ -76,14 +77,19 @@ const Profile = () => {
   });
   const [outgoing, setOutgoing] = useState('');
 
+  // Favorites
+  const favQuery = useQuery({ queryKey: ['favorites'], queryFn: () => listFavorites({ page: 1, page_size: 24 }) });
+  const favorites = favQuery.data?.results || [];
+
   return (
     <div data-easytag="id1-react/src/pages/Profile.jsx">
       <Container className="py-10 space-y-6">
         <div data-easytag="id2-react/src/pages/Profile.jsx" className="flex items-center justify-between">
           <h1 data-easytag="id3-react/src/pages/Profile.jsx" className="text-2xl font-semibold text-brand">Личный кабинет</h1>
-          <div data-easytag="id4-react/src/pages/Profile.jsx" className="grid grid-cols-3 gap-2">
+          <div data-easytag="id4-react/src/pages/Profile.jsx" className="grid grid-cols-4 gap-2">
             <button data-easytag="id5-react/src/pages/Profile.jsx" onClick={() => setTab('listings')} className={`h-10 rounded text-sm font-medium ${tab==='listings'?'bg-brand text-white':'border border-zinc-300 hover:bg-zinc-50'}`}>Мои объявления</button>
             <button data-easytag="id6-react/src/pages/Profile.jsx" onClick={() => setTab('messages')} className={`h-10 rounded text-sm font-medium ${tab==='messages'?'bg-brand text-white':'border border-zinc-300 hover:bg-zinc-50'}`}>Сообщения</button>
+            <button data-easytag="id6b-react/src/pages/Profile.jsx" onClick={() => setTab('favorites')} className={`h-10 rounded text-sm font-medium ${tab==='favorites'?'bg-brand text-white':'border border-zinc-300 hover:bg-zinc-50'}`}>Избранное</button>
             <button data-easytag="id7-react/src/pages/Profile.jsx" onClick={() => setTab('profile')} className={`h-10 rounded text-sm font-medium ${tab==='profile'?'bg-brand text-white':'border border-zinc-300 hover:bg-zinc-50'}`}>Профиль</button>
           </div>
         </div>
@@ -164,6 +170,31 @@ const Profile = () => {
                   </form>
                 </>
               )}
+            </div>
+          </section>
+        )}
+
+        {tab === 'favorites' && (
+          <section data-easytag="id70-react/src/pages/Profile.jsx" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div data-easytag="id71-react/src/pages/Profile.jsx" className="lg:col-span-3 rounded border border-zinc-200 bg-white p-4">
+              <SectionTitle>Мои избранные</SectionTitle>
+              <div data-easytag="id72-react/src/pages/Profile.jsx" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(favorites || []).map((f) => (
+                  <Link key={f.id} data-easytag={`id73-${f.id}-react/src/pages/Profile.jsx`} to={`/listing/${f.listing?.id}`} className="rounded border border-zinc-200 bg-white overflow-hidden hover:shadow-sm transition-shadow">
+                    <div data-easytag="id74-react/src/pages/Profile.jsx" className="aspect-video w-full bg-zinc-100" />
+                    <div data-easytag="id75-react/src/pages/Profile.jsx" className="p-3">
+                      <div data-easytag="id76-react/src/pages/Profile.jsx" className="flex items-center justify-between gap-2">
+                        <div data-easytag="id77-react/src/pages/Profile.jsx" className="text-sm font-semibold text-brand truncate">{f.listing?.title}</div>
+                        <div data-easytag="id78-react/src/pages/Profile.jsx" className="text-sm font-medium">{Number(f.listing?.price || 0).toLocaleString('ru-RU')} ₽</div>
+                      </div>
+                      <div data-easytag="id79-react/src/pages/Profile.jsx" className="mt-1 text-xs text-zinc-600">{f.listing?.make} {f.listing?.car_model} · {f.listing?.year}</div>
+                    </div>
+                  </Link>
+                ))}
+                {(favorites || []).length === 0 && (
+                  <div data-easytag="id80-react/src/pages/Profile.jsx" className="col-span-full text-sm text-zinc-600">Список избранного пуст.</div>
+                )}
+              </div>
             </div>
           </section>
         )}

@@ -116,9 +116,11 @@ class RefreshView(APIView):
         tags=["Auth"],
     )
     def post(self, request):
-        serializer = RefreshInputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data["refresh_token"]
+        # Be flexible and accept either schema field name from api_schema.yaml ("access")
+        # or the original serializer field name ("refresh_token").
+        token = request.data.get("access") or request.data.get("refresh_token")
+        if not token:
+            raise AuthenticationFailed("Refresh token is required")
         try:
             payload = decode(token)
         except ValueError as exc:

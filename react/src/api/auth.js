@@ -25,9 +25,10 @@ export async function login(payload) {
   return data;
 }
 
-// According to schema: body expects { access: string }
-export async function refresh(access) {
-  const body = { access: access || localStorage.getItem('token') || '' };
+// According to api_schema.yaml: body expects { access: string }
+// We'll pass refresh token in the "access" field to comply with schema and backend flexibility.
+export async function refresh(refreshToken) {
+  const body = { access: refreshToken || localStorage.getItem('refreshToken') || '' };
   const { data } = await instance.post('/api/auth/refresh/', body);
   if (data?.access) {
     saveTokens({ access: data.access });
