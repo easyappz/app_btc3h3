@@ -146,7 +146,8 @@ class Listing(models.Model):
 
 class ListingImage(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="listing_images/")
+    # Use FileField to avoid Pillow dependency
+    image = models.FileField(upload_to="listing_images/")
     order = models.PositiveIntegerField(default=0, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

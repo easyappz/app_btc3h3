@@ -50,7 +50,7 @@ class CarModelSerializer(serializers.ModelSerializer):
 
 
 class ListingImageSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(read_only=True)
+    image = serializers.FileField(read_only=True)
 
     class Meta:
         model = ListingImage
