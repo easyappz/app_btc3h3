@@ -122,9 +122,11 @@ class CatalogListingListCreateView(generics.ListCreateAPIView):
         sort = self.request.query_params.get("sort") or "created_desc"
         mapping = {
             "created_desc": "-created_at",
+            "created_asc": "created_at",
             "price_asc": "price",
             "price_desc": "-price",
             "year_desc": "-year",
+            "year_asc": "year",
         }
         order = mapping.get(sort, "-created_at")
         qs = qs.order_by(order, "-id")
@@ -372,6 +374,8 @@ class ConversationMessagesView(APIView):
         conv = get_object_or_404(Conversation, pk=pk)
         if request.user.id not in (conv.seller_id, conv.buyer_id) and not request.user.is_staff:
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        # Mark opponent messages as read when fetched
+        ChatMessage.objects.filter(conversation=conv, read_at__isnull=True).exclude(author=request.user).update(read_at=timezone.now())
         qs = conv.messages.select_related("author").order_by("created_at", "id")
         paginator = StandardPagination()
         page = paginator.paginate_queryset(qs, request)
